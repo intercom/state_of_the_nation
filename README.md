@@ -34,9 +34,9 @@ country.active_president(Date.new(2015, 1, 1))
 
 country.active_senators(Date.new(2015, 1, 1))
 # => [
-Senator(id: 1, name: "Ron Wyden"),
-...
-]
+# Senator(id: 1, name: "Ron Wyden"),
+# ...
+# ]
 
 
 ```
