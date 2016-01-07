@@ -316,4 +316,29 @@ describe StateOfTheNation do
       end
     end
   end
+
+  context "#should_round_timestamps?" do
+    let(:country) { Country.create }
+    let!(:washington) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(8)) }
+    let(:sub_second_timestamp) { 1270643035.04671 }
+    let(:sub_second_time) { Time.at(sub_second_timestamp)  }
+
+    it "is true for MySQL" do
+      allow(President).to receive_message_chain(:connection, :adapter_name).
+        and_return("MySQL")
+      expect(washington.send(:should_round_timestamps?)).to eq(true)
+    end
+
+    it "is false for PostgreSQL" do
+      allow(President).to receive_message_chain(:connection, :adapter_name).
+                           and_return("PostgreSQL")
+      expect(washington.send(:should_round_timestamps?)).to eq(false)
+    end
+
+    it "is true for SQLite" do
+      allow(President).to receive_message_chain(:connection, :adapter_name).
+                           and_return("SQLite")
+      expect(washington.send(:should_round_timestamps?)).to eq(true)
+    end
+  end
 end

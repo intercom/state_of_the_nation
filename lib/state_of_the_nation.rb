@@ -24,6 +24,7 @@ module StateOfTheNation
         @finish_key = finish_key
 
         define_method "active?" do |time = Time.now.utc|
+          time = should_round_timestamps? ? time.round : time
           (finish.blank? || finish > time) && start <= time
         end
 
@@ -55,8 +56,22 @@ module StateOfTheNation
       association = single ? plural.singularize : plural
 
       define_method "active_#{association}" do |time = Time.now.utc|
+        time = should_round_timestamps? ? time.round : time
         collection = send(plural.to_sym).select { |r| r.send("active?", time) }
         single ? collection.first : collection
+      end
+    end
+
+    def should_round_timestamps?
+      # MySQL datetime fields do not support millisecond resolution while
+      # PostgreSQL's do. To prevent issues with near identical timestamps not
+      # comparing as expected in .active? methods we'll choose the resolution
+      # appropriate for the database adapter backing the model.
+      case self.connection.adapter_name
+      when /PostgreSQL/
+        false
+      else
+        true
       end
     end
   end
@@ -130,5 +145,9 @@ module StateOfTheNation
 
   def finish_key
     self.class.finish_key
+  end
+
+  def should_round_timestamps?
+    self.class.send(:should_round_timestamps?)
   end
 end
