@@ -57,7 +57,8 @@ module StateOfTheNation
 
       define_method "active_#{association}" do |time = Time.now.utc|
         time = should_round_timestamps? ? time.round : time
-        collection = send(plural.to_sym).select { |r| r.send("active?", time) }
+        method_name = respond_to?(fetch_method = "fetch_#{plural}") ? fetch_method : plural.to_sym
+        collection = send(method_name).select { |r| r.send("active?", time) }
         single ? collection.first : collection
       end
     end
