@@ -1,8 +1,10 @@
 # StateOfTheNation
 
-State of the Nation is a Gem that makes modeling state that changes over time easy with ActiveRecord, allowing you to ensure that you to easily query the value at any point in time, as well as ensuring that your records don't overlap at any point.
+[![Build Status](https://travis-ci.com/intercom/state_of_the_nation.svg?token=Z1aavhs79p7e6XpUgjv5&branch=master)](https://travis-ci.com/intercom/state_of_the_nation)
 
-Take for example modeling the history of elected officials in the United States government. You would want to allow multiple Senators to be considered active at any point in time, while ensuring that only one President is active. Modeling this with StateOfTheNation is easy like so:
+StateOfTheNation makes modeling state that changes over time easy with ActiveRecord, allowing you to query the active value at any point in time, as well as ensure that your records don't overlap at any point.
+
+Take for example modeling the history of elected officials in the United States Government where multiple Senators and only one President may be "active" for any point in time. Modeling this with StateOfTheNation is easy like so:
 
 ```ruby
 class Country < ActiveRecord::Base
@@ -24,19 +26,29 @@ class Senator < ActiveRecord::Base
   considered_active.from(:entered_office_at).until(:left_office_at)
 end
 
+
 ```
 
 With this collection of models we can easy record and query the list of elected officials at any point in time, and be confident that any new records that we create don't collide.
 
 ```ruby
-country.active_president(Date.new(2015, 1, 1)) 
+
+usa = Country.create(name: "United States of America")
+obama = usa.presidents.create!(entered_office_at: Date.new(2009, 1, 20), left_office_at: nil)
+
+wyden = usa.senators.create!(entered_office_at: Date.new(1996, 2, 6), left_office_at: nil, name: "Ron Wyden")
+boxer = usa.senators.create!(entered_office_at: Date.new(1993, 1, 3), left_office_at: nil, name: "Barbara Boxer")
+
+usa.active_president(Date.new(2015, 1, 1)) 
+
 # => President(id: 1, name: "Barack Obama")
 
-country.active_senators(Date.new(2015, 1, 1))
+usa.active_senators(Date.new(2015, 1, 1))
 # => [
-Senator(id: 1, name: "Ron Wyden"),
-...
-]
+# Senator(id: 1, name: "Ron Wyden"),
+# Senator(id: 2, name: "Barbara Boxer")
+# ...
+# ]
 
 
 ```
