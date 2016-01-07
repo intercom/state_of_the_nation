@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Patrick O'Doherty", "Stephen O'Brien"]
   spec.email         = ["patrick@intercom.io", "stephen@intercom.io"]
 
-  spec.summary       = %q{An easy way to model state changes over time}
+  spec.summary       = %q{An easy way to model state that changes over time with ActiveRecord}
   spec.description   = %q{State of the Nation makes modeling object history easy.}
   spec.homepage      = "https://github.com/intercom/state_of_the_nation"
   spec.licenses      = ["Apache License, Version 2.0"]
@@ -32,6 +32,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "shoulda-matchers"
   spec.add_development_dependency "sqlite3"
 
-  spec.add_runtime_dependency "activesupport", "~> 4.2"
-  spec.add_runtime_dependency "activerecord", "~> 4.2"
+  spec.add_runtime_dependency "activesupport", ">= 4.0.0"
+  spec.add_runtime_dependency "activerecord", ">= 4.0.0"
 end
