@@ -24,12 +24,11 @@ module StateOfTheNation
         @finish_key = finish_key
 
         define_method "active?" do |time = Time.now.utc|
-          time = should_round_timestamps? ? time.round : time
-          (finish.blank? || finish > time) && start <= time
+          (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
         end
 
-        scope :active, lambda { |t = Time.now.utc|
-          where(QueryString.query_for(:active_scope, self), t, t)
+        scope :active, lambda { |time = Time.now.utc|
+          where(QueryString.query_for(:active_scope, self), round_if_should(time), round_if_should(time))
         }
       end
 
@@ -71,11 +70,15 @@ module StateOfTheNation
       association = single ? plural.singularize : plural
 
       define_method "active_#{association}" do |time = Time.now.utc|
-        time = should_round_timestamps? ? time.round : time
         method_name = with_identity_cache ? "fetch_#{plural}" : plural.to_sym
         collection = send(method_name).select { |r| r.send("active?", time) }
         single ? collection.first : collection
       end
+    end
+
+    def round_if_should(time)
+      return time.round if should_round_timestamps?
+      time
     end
 
     def should_round_timestamps?
@@ -133,12 +136,12 @@ module StateOfTheNation
 
   def start
     return unless start_key.present?
-    self.send(start_key) || Time.now.utc
+    return round_if_should(self.send(start_key) || Time.now.utc)
   end
 
   def finish
     return unless finish_key.present?
-    self.send(finish_key)
+    round_if_should(self.send(finish_key))
   end
 
   def bad_configuration?
@@ -165,5 +168,10 @@ module StateOfTheNation
 
   def should_round_timestamps?
     self.class.send(:should_round_timestamps?)
+  end
+
+  def round_if_should(time)
+    return time if time.nil?
+    self.class.send(:round_if_should, time)
   end
 end
