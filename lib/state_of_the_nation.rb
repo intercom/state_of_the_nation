@@ -77,8 +77,8 @@ module StateOfTheNation
     end
 
     def round_if_should(time)
-      return time.round if should_round_timestamps?
-      time
+      return time if !should_round_timestamps?
+      time.respond_to?(:round) ? time.round : time
     end
 
     def should_round_timestamps?
