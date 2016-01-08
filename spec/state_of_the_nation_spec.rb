@@ -344,16 +344,8 @@ describe StateOfTheNation do
 
   context "IdentityCache support" do
     before do
-      # Mock up of the IdentityCache methods
-      module IdentityCache
-        def fetch_presidents
-          self.presidents
-        end
-      end
-
       class Country < ActiveRecord::Base
         include StateOfTheNation
-        include IdentityCache 
 
         has_many :presidents
 
@@ -367,7 +359,7 @@ describe StateOfTheNation do
     context ".using_identity_cache" do
       it "uses the fetch_method to retrieve records" do
         expect(country).to receive(:fetch_presidents)
-          .and_call_original
+          .and_return([president])
         expect(country.active_president(day(7))).to eq(president)
       end
     end
