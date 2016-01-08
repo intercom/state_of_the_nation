@@ -352,6 +352,17 @@ describe StateOfTheNation do
         has_uniquely_active(:president).with_identity_cache
       end
     end
+    after do
+      class Country < ActiveRecord::Base
+        include StateOfTheNation
+
+        has_many :presidents
+        has_many :senators
+
+        has_uniquely_active(:president)
+        has_active(:senators)
+      end
+    end
 
     let(:country) { Country.create }
     let!(:president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(8)) }
@@ -362,6 +373,17 @@ describe StateOfTheNation do
           .and_return([president])
         expect(country.active_president(day(7))).to eq(president)
       end
+    end
+  end
+
+  context "creating records with non-Time values" do
+    let(:country) { Country.create }
+    it "works" do
+      washington = country.presidents.create!(
+        entered_office_at: Date.new(1789, 4, 30),
+        left_office_at: Date.new(1797, 5, 4)
+      )
+      expect(country.active_president(Date.new(1790, 1, 1))).to eq(washington)
     end
   end
 end
