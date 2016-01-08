@@ -1,6 +1,6 @@
 # StateOfTheNation
 
-[![Build Status](https://travis-ci.com/intercom/state_of_the_nation.svg?token=Z1aavhs79p7e6XpUgjv5&branch=master)](https://travis-ci.com/intercom/state_of_the_nation)
+[![Build Status](https://travis-ci.org/intercom/state_of_the_nation.svg?token=Z1aavhs79p7e6XpUgjv5&branch=master)](https://travis-ci.org/intercom/state_of_the_nation)
 
 StateOfTheNation makes modeling state that changes over time easy with ActiveRecord, allowing you to query the active value at any point in time, as well as ensure that your records don't overlap at any point.
 
