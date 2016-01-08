@@ -37,17 +37,32 @@ module StateOfTheNation
     end
 
     def has_active(association_plural)
-      add_child_methods(plural: association_plural, single: false)
+      @association_plural = association_plural
+      add_child_methods(plural: @association_plural, single: false, with_identity_cache: false)
+
+      def with_identity_cache
+        add_child_methods(plural: @association_plural, single: false, with_identity_cache: true)
+        self
+      end
+
+      self
     end
 
     def has_uniquely_active(association_singular)
-      association_plural = association_singular.to_s.pluralize
-      add_child_methods(plural: association_plural, single: true)
+      @association_plural = association_singular.to_s.pluralize
+      add_child_methods(plural: @association_plural, single: true, with_identity_cache: false)
+
+      def with_identity_cache
+        add_child_methods(plural: @association_plural, single: true, with_identity_cache: true)
+        self
+      end
+
+      self
     end
 
     private
 
-    def add_child_methods(plural:, single:)
+    def add_child_methods(plural:, single:, with_identity_cache:)
       child_class = self.reflect_on_association(plural).klass
       name = self.name.demodulize.underscore.to_sym
       child_class.instance_variable_set(:@parent_association, name)
@@ -57,7 +72,8 @@ module StateOfTheNation
 
       define_method "active_#{association}" do |time = Time.now.utc|
         time = should_round_timestamps? ? time.round : time
-        collection = send(plural.to_sym).select { |r| r.send("active?", time) }
+        method_name = with_identity_cache ? "fetch_#{plural}" : plural.to_sym
+        collection = send(method_name).select { |r| r.send("active?", time) }
         single ? collection.first : collection
       end
     end

@@ -52,6 +52,25 @@ usa.active_senators(Date.new(2015, 1, 1))
 
 
 ```
+## IdentityCache Support
+
+StateOfTheNation optionally supports fetching child records out of an IdentityCache cache instead of reading directly from the SQL table. 
+
+For example if the Country model uses IdentityCache to cache the has_many relationship to President, you can make StateOfTheNation use the IdentityCache methods by calling `.with_identity_cache` on your `has_active` or `has_uniquely_active` definitions like so.
+
+```ruby
+class Country
+  include IdentityCache
+  include StateOfTheNation
+  
+  has_many(:presidents)
+  cache_has_many(:presidents)
+  has_uniquely_active(:president).with_identity_cache
+end
+```
+
+Now every time the `Country#active_president` method is called StateOfTheNation will read through the IdentityCache methods and avoid a SELECT operation if possible.
+
 ## Installation
 
 Add this line to your application's Gemfile:

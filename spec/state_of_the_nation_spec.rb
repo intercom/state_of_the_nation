@@ -341,4 +341,27 @@ describe StateOfTheNation do
       expect(washington.send(:should_round_timestamps?)).to eq(true)
     end
   end
+
+  context "IdentityCache support" do
+    before do
+      class Country < ActiveRecord::Base
+        include StateOfTheNation
+
+        has_many :presidents
+
+        has_uniquely_active(:president).with_identity_cache
+      end
+    end
+
+    let(:country) { Country.create }
+    let!(:president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(8)) }
+
+    context ".using_identity_cache" do
+      it "uses the fetch_method to retrieve records" do
+        expect(country).to receive(:fetch_presidents)
+          .and_return([president])
+        expect(country.active_president(day(7))).to eq(president)
+      end
+    end
+  end
 end
