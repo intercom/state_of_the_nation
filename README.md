@@ -2,9 +2,11 @@
 
 [![Build Status](https://travis-ci.org/intercom/state_of_the_nation.svg?branch=master)](https://travis-ci.org/intercom/state_of_the_nation)
 
-StateOfTheNation makes modeling state that changes over time easy with ActiveRecord, allowing you to query the active value at any point in time, as well as ensure that your records don't overlap at any point.
+StateOfTheNation helps model data whose _active_ state changes over time. It provides out-of-the-box query methods to locate the record or records active at any moment. Optionally, it also enforces _uniquely_ active constraints at the application level – ensuring that only one record in a collection is active at once.
 
-Take for example modeling the history of elected officials in the United States Government where multiple Senators and only one President may be "active" for any point in time. Modeling this with StateOfTheNation is easy like so:
+## Example
+
+Take elected officials in the US Government: multiple Senators are in office (i.e. active) at any point in time, but there's only one President.
 
 ```ruby
 class Country < ActiveRecord::Base
@@ -25,8 +27,6 @@ class Senator < ActiveRecord::Base
   belongs_to :country
   considered_active.from(:entered_office_at).until(:left_office_at)
 end
-
-
 ```
 
 With this collection of models we can easy record and query the list of elected officials at any point in time, and be confident that any new records that we create don't collide.
@@ -34,29 +34,29 @@ With this collection of models we can easy record and query the list of elected 
 ```ruby
 
 usa = Country.create(name: "United States of America")
-obama = usa.presidents.create!(entered_office_at: Date.new(2009, 1, 20), left_office_at: nil)
+obama = usa.presidents.create!(name: "Barack Obama", entered_office_at: Date.new(2009, 1, 20))
 
-wyden = usa.senators.create!(entered_office_at: Date.new(1996, 2, 6), left_office_at: nil, name: "Ron Wyden")
-boxer = usa.senators.create!(entered_office_at: Date.new(1993, 1, 3), left_office_at: nil, name: "Barbara Boxer")
+usa.senators.create!(name: "Ron Wyden", entered_office_at: Date.new(1996, 2, 6))
+usa.senators.create!(name: "Barbara Boxer", entered_office_at: Date.new(1993, 1, 3))
+usa.senators.create!(name: "Alan Cranston", entered_office_at: Date.new(1969, 1, 3), left_office_at: Date.new(1993, 1, 3))
 
-usa.active_president(Date.new(2015, 1, 1)) 
+usa.active_president(Date.new(2015)) 
+# => President(id: 1, name: "Barack Obama", …)
 
-# => President(id: 1, name: "Barack Obama")
+obama.active?
+#=> true
 
-usa.active_senators(Date.new(2015, 1, 1))
-# => [
-# Senator(id: 1, name: "Ron Wyden"),
-# Senator(id: 2, name: "Barbara Boxer")
-# ...
-# ]
+usa.active_senators(Date.new(2015))
+# => [Senator(id: 1, name: "Ron Wyden", …), Senator(id: 2, name: "Barbara Boxer", …)]
 
-
+usa.presidents.create!(name: "Mitt Romney", entered_office_at: Date.new(2013, 1, 20))
+# => StateOfTheNation::ConflictError
 ```
 ## IdentityCache Support
 
-StateOfTheNation optionally supports fetching child records out of an IdentityCache cache instead of reading directly from the SQL table. 
+StateOfTheNation optionally supports fetching records through [IdentityCache](https://github.com/Shopify/identity_cache)  instead of reading directly from the database. 
 
-For example if the Country model uses IdentityCache to cache the has_many relationship to President, you can make StateOfTheNation use the IdentityCache methods by calling `.with_identity_cache` on your `has_active` or `has_uniquely_active` definitions like so.
+For example if the `Country` model uses IdentityCache to cache the `has_many` relationship to `President`, you can instruct StateOfTheNation to fetch from the cache by calling `.with_identity_cache` on your `has_active` or `has_uniquely_active` definitions:
 
 ```ruby
 class Country
@@ -68,8 +68,6 @@ class Country
   has_uniquely_active(:president).with_identity_cache
 end
 ```
-
-Now every time the `Country#active_president` method is called StateOfTheNation will read through the IdentityCache methods and avoid a SELECT operation if possible.
 
 ## Installation
 
