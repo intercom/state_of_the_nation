@@ -1,4 +1,5 @@
-require "state_of_the_nation/errors"
+require "state_of_the_nation/errors/conflict_error"
+require "state_of_the_nation/errors/configuration_error"
 require "state_of_the_nation/version"
 require "state_of_the_nation/query_string"
 require "active_support/all"
@@ -105,13 +106,13 @@ module StateOfTheNation
 
   def prevent_active_collisions
     return unless prevent_multiple_active
-    raise ConfigurationError.new if bad_configuration?
+    raise ConfigurationError if bad_configuration?
     return unless model.present?
 
-    raise ConflictError.new if other_record_active_in_range?
+    raise ConflictError.new(self, other_records_active_in_range) if other_records_active_in_range.any?
   end
 
-  def other_record_active_in_range?
+  def other_records_active_in_range
     records = self.class.where(parent_association => model)
     # all records scoped to the model (e.g. all subscriptions for a customer)
 
@@ -126,7 +127,7 @@ module StateOfTheNation
     # find competing records which *finish* being active AFTER this record *starts* being active
     # (or ones which are not set to finish being active)
 
-    records.any?
+    records
   end
 
   def model
