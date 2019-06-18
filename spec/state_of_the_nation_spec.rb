@@ -113,13 +113,13 @@ describe StateOfTheNation do
   context "validates finishes_after_starts" do
     let(:finish_after_start_error) { [ActiveRecord::RecordInvalid, "Validation failed: Left office at must be after Entered office at"] }
 
-    it "prevents creation of a record with finish date after start" do
+    it "prevents creation of a record with finish date before start" do
       expect {
         country.presidents.create!(entered_office_at: day(10), left_office_at: day(5))
       }.to raise_error(*finish_after_start_error)
     end
 
-    it "prevents updating of a record to have finish date after start" do
+    it "prevents updating of a record to have finish date before start" do
       p = country.presidents.create!(entered_office_at: day(4), left_office_at: day(5))
       expect {
         p.update_attributes!(entered_office_at: day(6))
@@ -129,6 +129,12 @@ describe StateOfTheNation do
     it "doesn’t fail if no finish date set" do
       expect {
         country.presidents.create!(entered_office_at: day(10))
+      }.not_to raise_error
+    end
+
+    it "doesn’t fail if no start date set" do
+      expect {
+        country.presidents.create!(left_office_at: day(5))
       }.not_to raise_error
     end
 
@@ -203,6 +209,19 @@ describe StateOfTheNation do
 
       [washington, roosevelt, nixon, reagan, obama].each do |president|
         expect(president).not_to be_active(day(0.5))
+      end
+    end
+
+    context "with no start date" do
+      # this is its own context block to not interfere with the before any active test
+      let!(:pre_history) { country.presidents.create!(left_office_at: day(1)) }
+
+      it "works when no start date" do
+        expect(President.active(day(0))).to eq [pre_history]
+
+        expect(country.active_president(day(0))).to eq pre_history
+
+        expect(pre_history).to be_active(day(0))
       end
     end
   end
@@ -292,7 +311,7 @@ describe StateOfTheNation do
       end
     end
 
-    it "assumes start key value of now if blank" do
+    it "assumes start key value of start of time if blank" do
       # protects against created_at being unset for a new record
 
       expect { pres3; pres4.update_attributes!(comment: "yo") }.not_to raise_error

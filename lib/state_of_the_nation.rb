@@ -25,7 +25,7 @@ module StateOfTheNation
         @finish_key = finish_key
 
         define_method "active?" do |time = Time.now.utc|
-          (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
+          (finish.blank? || round_if_should(finish) > round_if_should(time)) && (start.blank? || round_if_should(start) <= round_if_should(time))
         end
 
         scope :active, lambda { |time = Time.now.utc|
@@ -100,7 +100,7 @@ module StateOfTheNation
 
   def ensure_finishes_after_starts
     return if finish.blank?
-    return if finish >= start
+    return if start.blank? || finish >= start
     errors.add(finish_key, "must be after #{start_key.to_s.humanize}")
   end
 
@@ -123,7 +123,7 @@ module StateOfTheNation
     # find competing records which *start* being active BEFORE the current record *finishes* being active
     # (if the current record is set to finish being active)
 
-    records = records.where(QueryString.query_for(:greater_than_or_null, self.class), start)
+    records = records.where(QueryString.query_for(:greater_than_or_null, self.class), start) if start.present?
     # find competing records which *finish* being active AFTER this record *starts* being active
     # (or ones which are not set to finish being active)
 
@@ -137,7 +137,7 @@ module StateOfTheNation
 
   def start
     return unless start_key.present?
-    return round_if_should(self.send(start_key) || Time.now.utc)
+    round_if_should(self.send(start_key))
   end
 
   def finish
