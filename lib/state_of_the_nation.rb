@@ -13,9 +13,11 @@ module StateOfTheNation
   end
 
   module ClassMethods
-    attr_accessor :prevent_multiple_active, :parent_association, :start_key, :finish_key
+    attr_accessor :prevent_multiple_active, :parent_association, :start_key, :finish_key, :ignore_empty
 
-    def considered_active
+    def considered_active(ignore_empty: false)
+      @ignore_empty = ignore_empty
+
       def from(start_key)
         @start_key = start_key
         self
@@ -127,6 +129,9 @@ module StateOfTheNation
     # find competing records which *finish* being active AFTER this record *starts* being active
     # (or ones which are not set to finish being active)
 
+    records = records.where(QueryString.query_for(:start_and_finish_not_equal, self.class)) if ignore_empty
+    # exclude records where there is no difference between start and finish dates
+
     records
   end
 
@@ -165,6 +170,10 @@ module StateOfTheNation
 
   def finish_key
     self.class.finish_key
+  end
+
+  def ignore_empty
+    self.class.ignore_empty
   end
 
   def should_round_timestamps?
