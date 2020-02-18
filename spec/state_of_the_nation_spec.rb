@@ -268,7 +268,7 @@ describe StateOfTheNation do
       expect { pres1; pres5 }.not_to raise_error
     end
 
-    it "raises an exception if existing model is a no-op" do
+    it "raises an exception if existing model has an empty activation interval" do
       expect { pres6; pres1 }.to raise_error StateOfTheNation::ConflictError
     end
 
