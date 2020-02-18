@@ -272,7 +272,7 @@ describe StateOfTheNation do
       expect { pres6; pres1 }.to raise_error StateOfTheNation::ConflictError
     end
 
-    it "does nothing if existing model is a no-op and no-ops ignored" do
+    it "does nothing if existing model has an empty activation interval and empty intervals are ignored" do
       allow(President).to receive(:ignore_empty).and_return(true)
 
       expect { pres6; pres1 }.not_to raise_error
