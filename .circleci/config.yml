@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/intercom/intercom-instrumentation
+
+    environment:
+      RAILS_ENV: test
+
+    docker:
+    - image: circleci/ruby:2.5.5
+
+    steps:
+    - checkout
+
+    - restore_cache:
+        keys:
+        - v2-dependencies-{{ .Branch }}
+        - v2-dependencies-master
+        - v2-dependencies-
+
+    - run: bundle install --jobs=4 --path=vendor/bundle
+
+    - save_cache:
+        key: v2-dependencies-{{ .Branch }}
+        paths:
+        - vendor/bundle
+
+    - run: bundle exec rspec --format progress spec
