@@ -122,7 +122,7 @@ describe StateOfTheNation do
     it "prevents updating of a record to have finish date after start" do
       p = country.presidents.create!(entered_office_at: day(4), left_office_at: day(5))
       expect {
-        p.update_attributes!(entered_office_at: day(6))
+        p.update!(entered_office_at: day(6))
       }.to raise_error(*finish_after_start_error)
     end
 
@@ -268,7 +268,7 @@ describe StateOfTheNation do
     it "raises an exception if multiple active would have occurred from updating" do
       expect {
         pres1
-        pres3.update_attributes!(entered_office_at: day(9))
+        pres3.update!(entered_office_at: day(9))
       }.to raise_error StateOfTheNation::ConflictError
     end
 
@@ -288,20 +288,20 @@ describe StateOfTheNation do
 
     it "doesn’t prevent saving an already active record" do
       travel_to(day(11)) do
-        expect { pres3.update_attributes!(left_office_at: day(14)) }.not_to raise_error
+        expect { pres3.update!(left_office_at: day(14)) }.not_to raise_error
       end
     end
 
     it "assumes start key value of now if blank" do
       # protects against created_at being unset for a new record
 
-      expect { pres3; pres4.update_attributes!(comment: "yo") }.not_to raise_error
+      expect { pres3; pres4.update!(comment: "yo") }.not_to raise_error
 
       allow(pres4).to receive(:entered_office_at).and_return(nil)
 
       travel_to(pres3.entered_office_at) do
         expect {
-          pres3; pres4.update_attributes!(comment: "no")
+          pres3; pres4.update!(comment: "no")
         }.to raise_error StateOfTheNation::ConflictError
       end
     end
