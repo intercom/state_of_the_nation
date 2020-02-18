@@ -15,39 +15,34 @@ describe StateOfTheNation do
   #
   #          a country also has many senators, active in the same way, but
   #          where many can be active at once
+
+  class President < ActiveRecord::Base
+    include StateOfTheNation
+
+    belongs_to :country
+
+    considered_active.from(:entered_office_at).until(:left_office_at)
+  end
+
+  class Senator < ActiveRecord::Base
+    include StateOfTheNation
+
+    belongs_to :country
+
+    considered_active.from(:entered_office_at).until(:left_office_at)
+  end
+
+  class Country < ActiveRecord::Base
+    include StateOfTheNation
+
+    has_many :presidents
+    has_many :senators
+
+    has_uniquely_active :president
+    has_active :senators
+  end
+
   before :all do
-    # 1. Mock classes to unit test the module
-    @existing_president_constant = President if defined?(President)
-    @existing_country_constant = Country if defined?(Country)
-    @existing_senator_constant = Senator if defined?(Senator)
-
-    class President < ActiveRecord::Base
-      include StateOfTheNation
-
-      belongs_to :country
-
-      considered_active.from(:entered_office_at).until(:left_office_at)
-    end
-
-    class Senator < ActiveRecord::Base
-      include StateOfTheNation
-
-      belongs_to :country
-
-      considered_active.from(:entered_office_at).until(:left_office_at)
-    end
-
-    class Country < ActiveRecord::Base
-      include StateOfTheNation
-
-      has_many :presidents
-      has_many :senators
-
-      has_uniquely_active :president
-      has_active :senators
-    end
-
-    # 2. Real tables for the mock classes
     m = ActiveRecord::Migration.new
     m.create_table :presidents do |t|
       t.datetime :entered_office_at
@@ -62,17 +57,6 @@ describe StateOfTheNation do
       t.integer :country_id
     end
     m.create_table :countries
-  end
-
-  after :all do
-    President = @existing_president_constant
-    Country = @existing_country_constant
-    Senator = @existing_senator_constant
-
-    m = ActiveRecord::Migration.new
-    m.drop_table :presidents
-    m.drop_table :senators
-    m.drop_table :countries
   end
 
   context "convenience specs" do
