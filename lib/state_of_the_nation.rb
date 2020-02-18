@@ -33,6 +33,24 @@ module StateOfTheNation
         }
       end
 
+      private def round_if_should(time)
+        return time if !should_round_timestamps?
+        time.respond_to?(:round) ? time.round : time
+      end
+
+      private def should_round_timestamps?
+        # MySQL datetime fields do not support millisecond resolution while
+        # PostgreSQL's do. To prevent issues with near identical timestamps not
+        # comparing as expected in .active? methods we'll choose the resolution
+        # appropriate for the database adapter backing the model.
+        case self.connection.adapter_name
+        when /PostgreSQL/
+          false
+        else
+          true
+        end
+      end
+
       self
     end
 
@@ -74,24 +92,6 @@ module StateOfTheNation
         method_name = with_identity_cache ? "fetch_#{plural}" : plural.to_sym
         collection = send(method_name).select { |r| r.send("active?", time) }
         single ? collection.first : collection
-      end
-    end
-
-    def round_if_should(time)
-      return time if !should_round_timestamps?
-      time.respond_to?(:round) ? time.round : time
-    end
-
-    def should_round_timestamps?
-      # MySQL datetime fields do not support millisecond resolution while
-      # PostgreSQL's do. To prevent issues with near identical timestamps not
-      # comparing as expected in .active? methods we'll choose the resolution
-      # appropriate for the database adapter backing the model.
-      case self.connection.adapter_name
-      when /PostgreSQL/
-        false
-      else
-        true
       end
     end
   end
