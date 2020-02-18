@@ -59,6 +59,13 @@ describe StateOfTheNation do
     m.create_table :countries
   end
 
+  after :all do
+    m = ActiveRecord::Migration.new
+    m.drop_table :presidents
+    m.drop_table :senators
+    m.drop_table :countries
+  end
+
   context "convenience specs" do
     # can be used in including classes to test implementation is correct
     context "parent class" do
