@@ -129,7 +129,7 @@ module StateOfTheNation
     # find competing records which *finish* being active AFTER this record *starts* being active
     # (or ones which are not set to finish being active)
 
-    records = records.where(QueryString.query_for(:start_and_finish_not_equal, self.class)) if ignore_empty
+    records = records.where(QueryString.query_for(:start_and_finish_not_equal_and_not_null, self.class)) if ignore_empty
     # exclude records where there is no difference between start and finish dates
 
     records
