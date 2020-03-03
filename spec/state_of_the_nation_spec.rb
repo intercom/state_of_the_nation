@@ -254,6 +254,7 @@ describe StateOfTheNation do
     let(:pres6) { country.presidents.create!(entered_office_at: day(5), left_office_at: day(5)) }
     let(:pres7) { country.presidents.create!(entered_office_at: day(6), left_office_at: nil)}
 
+
     it "raises an exception if multiple active would have occurred from creation" do
       expect { pres1; pres2 }.to raise_error StateOfTheNation::ConflictError
     end
