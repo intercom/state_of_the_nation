@@ -252,6 +252,8 @@ describe StateOfTheNation do
     let(:pres4) { country.presidents.create!(entered_office_at: day(15), left_office_at: day(22)) }
     let(:pres5) { President.create!(entered_office_at: pres1.entered_office_at, left_office_at: pres1.left_office_at) }
     let(:pres6) { country.presidents.create!(entered_office_at: day(5), left_office_at: day(5)) }
+    let(:pres7) { country.presidents.create!(entered_office_at: day(6), left_office_at: nil)}
+
 
     it "raises an exception if multiple active would have occurred from creation" do
       expect { pres1; pres2 }.to raise_error StateOfTheNation::ConflictError
@@ -276,6 +278,16 @@ describe StateOfTheNation do
       allow(President).to receive(:ignore_empty).and_return(true)
 
       expect { pres6; pres1 }.not_to raise_error
+    end
+
+    it "unterminated existing model are considered active" do
+      expect { pres7; pres1 }.to raise_error StateOfTheNation::ConflictError
+    end
+
+    it "unterminated existing model are considered active when empty intervals are ignored" do
+      allow(President).to receive(:ignore_empty).and_return(true)
+
+      expect { pres7; pres1 }.to raise_error StateOfTheNation::ConflictError
     end
 
     it "does nothing if prevent_multiple_active is set to false" do
