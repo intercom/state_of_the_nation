@@ -30,12 +30,12 @@ module StateOfTheNation
           (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
         end
 
-        define_method "active_in_interval?" do |from_time, until_time = nil|
-          start_less_than_until_or_until_is_nil = (until_time.nil? || round_if_should(start) < until_time)
-          finish_after_start_or_finish_is_nil = (finish.nil? || round_if_should(finish) > from_time)
+        define_method "active_in_interval?" do |interval_start:, interval_end: nil|
+          start_before_interval_finish_or_comparison_with_nil = (start.nil? || interval_end.nil? || round_if_should(start) < interval_end)
+          finish_after_interval_start_or_comparison_with_nil = (finish.nil? || interval_start.nil? || round_if_should(finish) > interval_start)
           start_and_finish_not_equal_or_are_nil = (start != finish || start.nil? || finish.nil?)
-          return true if start_less_than_until_or_until_is_nil && finish_after_start_or_finish_is_nil && start_and_finish_not_equal_or_are_nil
-          return true if start_less_than_until_or_until_is_nil && finish_after_start_or_finish_is_nil && !ignore_empty
+          return true if start_before_interval_finish_or_comparison_with_nil && finish_after_interval_start_or_comparison_with_nil && start_and_finish_not_equal_or_are_nil
+          return true if start_before_interval_finish_or_comparison_with_nil && finish_after_interval_start_or_comparison_with_nil && !ignore_empty
         end
 
         scope :active, lambda { |time = Time.now.utc|

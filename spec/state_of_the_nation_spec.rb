@@ -246,20 +246,39 @@ describe StateOfTheNation do
   end
 
   context ".active_in_period" do
-    let(:incumbent_president) { country.presidents.create!(entered_office_at: day(8), left_office_at: day(12)) }
-    let(:dictator) { country.presidents.create!(entered_office_at: day(1), left_office_at: nil) }
-    let(:previous_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(8)) }
-    let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(2), left_office_at: day(2)) }
+    let(:unbounded_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: nil) }
+    let(:bounded_president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(4)) }
+    let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(4)) }
 
     it "returns true for records that are active in the interval" do
-      expect(incumbent_president.active_in_interval?(day(10), day(12))).to be_truthy
-      expect(president_with_empty_active_period.active_in_interval?(day(10), day(12))).to be_truthy
-      expect(dictator.active_in_interval(day(5), day(7))).to be_truthy
+      expect(bounded_president).to be_active_in_interval(interval_start: day(3), interval_end: day(7))
+      expect(bounded_president).to be_active_in_interval(interval_start: day(3), interval_end: nil)
+      expect(bounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(3))
+      expect(bounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
+
+      expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: day(12))
+      expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: nil)
+      expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(12))
+      expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
+    end
+
+    it "returns true for records with an empty activation period in the range" do
+      expect(president_with_empty_active_period).to be_active_in_interval(interval_start: day(3), interval_end: day(5))
+      expect(president_with_empty_active_period).to be_active_in_interval(interval_start: day(3), interval_end: nil)
+      expect(president_with_empty_active_period).to be_active_in_interval(interval_start: nil, interval_end: day(5))
+      expect(president_with_empty_active_period).to be_active_in_interval(interval_start: nil, interval_end: nil)
     end
 
     it "returns false for records active outside the range" do
-      expect(previous_president.active_in_interval?(day(9), day(12))).to be_falsey
-      expect(president_with_empty_active_period.active_in_interval?(day(2), day(19))).to be_truthy
+      expect(bounded_president).not_to be_active_in_interval(interval_start: day(4), interval_end: day(7))
+      expect(bounded_president).not_to be_active_in_interval(interval_start: day(4), interval_end: nil)
+
+      expect(unbounded_president).not_to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+      expect(unbounded_president).not_to be_active_in_interval(interval_start: nil, interval_end: day(4))
+
+      expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: day(6))
+      expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: nil)
+      expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start:  nil, interval_end: day(4))
     end
 
     context "with ignore_empty as true" do
@@ -267,25 +286,37 @@ describe StateOfTheNation do
         allow(President).to receive(:ignore_empty).and_return(true)
       end
 
-      it "is false for empty active periods" do
-        expect(president_with_empty_active_period.active_in_interval?(day(10), day(12))).to be_falsey
+      it "returns true for records that are active in the interval" do
+        expect(bounded_president).to be_active_in_interval(interval_start: day(3), interval_end: day(7))
+        expect(bounded_president).to be_active_in_interval(interval_start: day(3), interval_end: nil)
+        expect(bounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(3))
+        expect(bounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
+
+        expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: day(12))
+        expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: nil)
+        expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(12))
+        expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
       end
-    end
 
-    it "works" do
-      expect(incumbent_president).to be_active_in_interval
-      incumbent_president.destroy
-      expect(dictator).to be_active_in_interval
-      dictator.destroy
+      it "returns false for records with an empty activation period in the range" do
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(3), interval_end: day(5))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(3), interval_end: nil)
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: nil, interval_end: day(5))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: nil, interval_end: nil)
+      end
 
-      expect(previous_president).not_to be_active_in_interval
-      previous_president.destroy
+      it "returns false for records active outside the range" do
+        expect(bounded_president).not_to be_active_in_interval(interval_start: day(4), interval_end: day(7))
+        expect(bounded_president).not_to be_active_in_interval(interval_start: day(4), interval_end: nil)
 
-      expect(empty_president_future).not_to be_active_in_interval
-      empty_president_future.destroy
+        expect(unbounded_president).not_to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+        expect(unbounded_president).not_to be_active_in_interval(interval_start: nil, interval_end: day(4))
 
-      expect(empty_president_past).not_to be_active_in_interval
-      empty_president_past.destroy
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: day(6))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: nil)
+        expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start:  nil, interval_end: day(4))
+      end
+
     end
   end
 
