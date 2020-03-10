@@ -245,6 +245,50 @@ describe StateOfTheNation do
     end
   end
 
+  context ".active_in_period" do
+    let(:incumbent_president) { country.presidents.create!(entered_office_at: day(8), left_office_at: day(12)) }
+    let(:dictator) { country.presidents.create!(entered_office_at: day(1), left_office_at: nil) }
+    let(:previous_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(8)) }
+    let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(2), left_office_at: day(2)) }
+
+    it "returns true for records that are active in the interval" do
+      expect(incumbent_president.active_in_interval?(day(10), day(12))).to be_truthy
+      expect(president_with_empty_active_period.active_in_interval?(day(10), day(12))).to be_truthy
+      expect(dictator.active_in_interval(day(5), day(7))).to be_truthy
+    end
+
+    it "returns false for records active outside the range" do
+      expect(previous_president.active_in_interval?(day(9), day(12))).to be_falsey
+      expect(president_with_empty_active_period.active_in_interval?(day(2), day(19))).to be_truthy
+    end
+
+    context "with ignore_empty as true" do
+      before do
+        allow(President).to receive(:ignore_empty).and_return(true)
+      end
+
+      it "is false for empty active periods" do
+        expect(president_with_empty_active_period.active_in_interval?(day(10), day(12))).to be_falsey
+      end
+    end
+
+    it "works" do
+      expect(incumbent_president).to be_active_in_interval
+      incumbent_president.destroy
+      expect(dictator).to be_active_in_interval
+      dictator.destroy
+
+      expect(previous_president).not_to be_active_in_interval
+      previous_president.destroy
+
+      expect(empty_president_future).not_to be_active_in_interval
+      empty_president_future.destroy
+
+      expect(empty_president_past).not_to be_active_in_interval
+      empty_president_past.destroy
+    end
+  end
+
   context "before_validation: prevent_active_collisions" do
     let(:pres1) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(10)) }
     let(:pres2) { country.presidents.create!(entered_office_at: day(5), left_office_at: day(12)) }
