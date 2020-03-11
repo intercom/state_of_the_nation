@@ -42,8 +42,7 @@ module StateOfTheNation
           elsif interval_end.nil?
             record_end.nil? || record_end > interval_start
           elsif record_end.nil?
-            return true if interval_end > record_start
-            false
+            interval_end > record_start
           else
             record_start < interval_end && interval_start < record_end
           end
