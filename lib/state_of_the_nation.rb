@@ -30,7 +30,7 @@ module StateOfTheNation
           (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
         end
 
-        define_method "active_in_interval?" do |interval_start:, interval_end: nil|
+        define_method "active_in_interval?" do |interval_start:, interval_end:|
           record_start = round_if_should(start)
           record_end = round_if_should(finish)
           if ignore_empty && record_start == record_end
