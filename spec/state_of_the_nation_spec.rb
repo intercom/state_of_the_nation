@@ -249,6 +249,7 @@ describe StateOfTheNation do
     let(:unbounded_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: nil) }
     let(:bounded_president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(4)) }
     let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(4)) }
+    let(:president_with_nil_period) { country.presidents.create!(entered_office_at: nil, left_office_at: nil) }
 
     it "returns true for records that are active in the interval" do
       expect(bounded_president).to be_active_in_interval(interval_start: day(3), interval_end: day(7))
@@ -260,6 +261,13 @@ describe StateOfTheNation do
       expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: nil)
       expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(12))
       expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
+    end
+
+    it "returns true for records with no start or end activation period set" do
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: day(4))
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: nil)
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: nil)
     end
 
     it "returns true for records with an empty activation period in the range" do
@@ -296,6 +304,13 @@ describe StateOfTheNation do
         expect(unbounded_president).to be_active_in_interval(interval_start: day(4), interval_end: nil)
         expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: day(12))
         expect(unbounded_president).to be_active_in_interval(interval_start: nil, interval_end: nil)
+      end
+
+      it "returns true for records with no start or end activation period set" do
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: day(4))
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: nil)
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: nil)
       end
 
       it "returns false for records with an empty activation period in the range" do
