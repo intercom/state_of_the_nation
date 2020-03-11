@@ -37,6 +37,8 @@ module StateOfTheNation
             false
           elsif interval_start.nil? && interval_end.nil?
             true
+          elsif interval_start == interval_end
+            active?(interval_start)
           elsif interval_start.nil?
             record_start < interval_end
           elsif interval_end.nil?
