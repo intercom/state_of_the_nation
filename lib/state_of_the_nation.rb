@@ -31,11 +31,24 @@ module StateOfTheNation
         end
 
         define_method "active_in_interval?" do |interval_start:, interval_end: nil|
-          start_before_interval_finish_or_comparison_with_nil = (start.nil? || interval_end.nil? || round_if_should(start) < interval_end)
-          finish_after_interval_start_or_comparison_with_nil = (finish.nil? || interval_start.nil? || round_if_should(finish) > interval_start)
-          start_and_finish_not_equal_or_are_nil = (start != finish || start.nil? || finish.nil?)
-          return true if start_before_interval_finish_or_comparison_with_nil && finish_after_interval_start_or_comparison_with_nil && start_and_finish_not_equal_or_are_nil
-          return true if start_before_interval_finish_or_comparison_with_nil && finish_after_interval_start_or_comparison_with_nil && !ignore_empty
+          record_start = round_if_should(start)
+          record_end = round_if_should(finish)
+          if ignore_empty && record_start == record_end
+            false
+          elsif interval_start.nil? && interval_end.nil?
+            true
+          elsif interval_start.nil?
+            return true if record_start < interval_end
+            false
+          elsif interval_end.nil?
+            return true if record_end.nil? || record_end > interval_start
+            false
+          elsif record_end.nil?
+            return true if interval_end > record_start
+            false
+          else
+            record_start < interval_end && interval_start < record_end
+          end
         end
 
         scope :active, lambda { |time = Time.now.utc|
