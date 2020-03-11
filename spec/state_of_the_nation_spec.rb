@@ -146,6 +146,7 @@ describe StateOfTheNation do
       end
     end
 
+
     it "works" do
       expect(President.active(day(6))).to eq [washington]
       expect(President.active(day(12))).to eq [roosevelt]
@@ -279,6 +280,20 @@ describe StateOfTheNation do
       expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: day(6))
       expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start: day(4), interval_end: nil)
       expect(president_with_empty_active_period).not_to be_active_in_interval(interval_start:  nil, interval_end: day(4))
+    end
+
+    context "for records without a start date set" do
+      before do
+        travel_to(day(30))
+      end
+
+      let(:open_started_president) { country.presidents.create!(entered_office_at: nil, left_office_at: day(60)) }
+
+      it "deems them to be active from now" do
+        expect(open_started_president).not_to be_active_in_interval(interval_start: day(25), interval_end: day(30))
+        expect(open_started_president).to be_active_in_interval(interval_start: day(30), interval_end: day(35))
+      end
+
     end
 
     context "with ignore_empty as true" do
