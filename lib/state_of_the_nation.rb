@@ -30,6 +30,26 @@ module StateOfTheNation
           (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
         end
 
+        define_method "active_in_interval?" do |interval_start, interval_end|
+          record_start = round_if_should(start)
+          record_end = round_if_should(finish)
+          if ignore_empty && record_start == record_end
+            false
+          elsif interval_start.nil? && interval_end.nil?
+            true
+          elsif interval_start == interval_end
+            active?(interval_start)
+          elsif interval_start.nil?
+            record_start < interval_end
+          elsif interval_end.nil?
+            record_end.nil? || record_end > interval_start
+          elsif record_end.nil?
+            interval_end > record_start
+          else
+            record_start < interval_end && record_end > interval_start
+          end
+        end
+
         scope :active, lambda { |time = Time.now.utc|
           where(QueryString.query_for(:active_scope, self), round_if_should(time), round_if_should(time))
         }

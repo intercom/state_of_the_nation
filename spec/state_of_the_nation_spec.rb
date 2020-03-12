@@ -245,6 +245,97 @@ describe StateOfTheNation do
     end
   end
 
+  context ".active_in_period" do
+    let(:bounded_president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(4)) }
+    let(:unbounded_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: nil) }
+    let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(4)) }
+
+    it "returns true for records that are active in the interval" do
+      expect(bounded_president).to be_active_in_interval(day(3), day(7))
+      expect(bounded_president).to be_active_in_interval(day(3), nil)
+      expect(bounded_president).to be_active_in_interval(nil, day(3))
+      expect(bounded_president).to be_active_in_interval(nil, nil)
+
+      expect(unbounded_president).to be_active_in_interval(day(4), day(12))
+      expect(unbounded_president).to be_active_in_interval(day(4), nil)
+      expect(unbounded_president).to be_active_in_interval(nil, day(12))
+      expect(unbounded_president).to be_active_in_interval(nil, nil)
+      expect(unbounded_president).to be_active_in_interval(day(4), day(4))
+    end
+
+    it "returns true for records with an empty activation period in the range" do
+      expect(president_with_empty_active_period).to be_active_in_interval(day(3), day(5))
+      expect(president_with_empty_active_period).to be_active_in_interval(day(3), nil)
+      expect(president_with_empty_active_period).to be_active_in_interval(nil, day(5))
+      expect(president_with_empty_active_period).to be_active_in_interval(nil, nil)
+    end
+
+    it "returns false for records active outside the range" do
+      expect(bounded_president).not_to be_active_in_interval(day(4), day(7))
+      expect(bounded_president).not_to be_active_in_interval(day(4), nil)
+
+      expect(unbounded_president).not_to be_active_in_interval(day(2), day(4))
+      expect(unbounded_president).not_to be_active_in_interval(nil, day(4))
+
+      expect(president_with_empty_active_period).not_to be_active_in_interval(day(4), day(6))
+      expect(president_with_empty_active_period).not_to be_active_in_interval(day(4), nil)
+      expect(president_with_empty_active_period).not_to be_active_in_interval( nil, day(4))
+    end
+
+    context "with ignore_empty as true" do
+      before do
+        allow(President).to receive(:ignore_empty).and_return(true)
+      end
+
+      it "returns true for records that are active in the interval" do
+        expect(bounded_president).to be_active_in_interval(day(3), day(7))
+        expect(bounded_president).to be_active_in_interval(day(3), nil)
+        expect(bounded_president).to be_active_in_interval(nil, day(3))
+        expect(bounded_president).to be_active_in_interval(nil, nil)
+
+        expect(unbounded_president).to be_active_in_interval(day(4), day(12))
+        expect(unbounded_president).to be_active_in_interval(day(4), nil)
+        expect(unbounded_president).to be_active_in_interval(nil, day(12))
+        expect(unbounded_president).to be_active_in_interval(nil, nil)
+        expect(unbounded_president).to be_active_in_interval(day(4), day(4))
+      end
+
+      it "returns false for records with an empty activation period in the range" do
+        expect(president_with_empty_active_period).not_to be_active_in_interval(day(3), day(5))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(day(3), nil)
+        expect(president_with_empty_active_period).not_to be_active_in_interval(nil, day(5))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(nil, nil)
+      end
+
+      it "returns false for records active outside the range" do
+        expect(bounded_president).not_to be_active_in_interval(day(4), day(7))
+        expect(bounded_president).not_to be_active_in_interval(day(4), nil)
+
+        expect(unbounded_president).not_to be_active_in_interval(day(2), day(4))
+        expect(unbounded_president).not_to be_active_in_interval(nil, day(4))
+
+        expect(president_with_empty_active_period).not_to be_active_in_interval(day(4), day(6))
+        expect(president_with_empty_active_period).not_to be_active_in_interval(day(4), nil)
+        expect(president_with_empty_active_period).not_to be_active_in_interval( nil, day(4))
+      end
+
+    end
+
+    context "for records without a start date set" do
+      before do
+        travel_to(day(30))
+      end
+
+      let(:open_started_president) { country.presidents.create!(entered_office_at: nil, left_office_at: day(60)) }
+
+      it "deems them to be active from now" do
+        expect(open_started_president).not_to be_active_in_interval(day(25), day(30))
+        expect(open_started_president).to be_active_in_interval(day(30), day(35))
+      end
+
+    end
+  end
+
   context "before_validation: prevent_active_collisions" do
     let(:pres1) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(10)) }
     let(:pres2) { country.presidents.create!(entered_office_at: day(5), left_office_at: day(12)) }
