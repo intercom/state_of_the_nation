@@ -163,7 +163,7 @@ module StateOfTheNation
 
   def start
     return unless start_key.present?
-    return round_if_should(self.send(start_key) || Time.now.utc)
+    return round_if_should(self.send(start_key) || Time.at(0).utc)
   end
 
   def finish

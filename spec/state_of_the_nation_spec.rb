@@ -104,29 +104,52 @@ describe StateOfTheNation do
   context "validates finishes_after_starts" do
     let(:finish_after_start_error) { [ActiveRecord::RecordInvalid, "Validation failed: Left office at must be after Entered office at"] }
 
-    it "prevents creation of a record with finish date after start" do
-      expect {
-        country.presidents.create!(entered_office_at: day(10), left_office_at: day(5))
-      }.to raise_error(*finish_after_start_error)
+    describe "#create" do
+      it "prevents creation of a record with finish date after start" do
+        expect {
+          country.presidents.create!(entered_office_at: day(10), left_office_at: day(5))
+        }.to raise_error(*finish_after_start_error)
+      end
+
+      it "doesn't fail if no start date set" do
+        expect {
+          country.presidents.create!(left_office_at: day(6))
+        }.not_to raise_error
+      end
+
+      it "doesn’t fail if no finish date set" do
+        expect {
+          country.presidents.create!(entered_office_at: day(10))
+        }.not_to raise_error
+      end
+
+      it "doesn’t fail if both start and finish date are not set" do
+        expect {
+          country.presidents.create!
+        }.not_to raise_error
+      end
+
+      it "doesn’t fail if finish date is the same as start date" do
+        expect {
+          country.presidents.create!(entered_office_at: day(10), left_office_at: day(10))
+        }.not_to raise_error
+      end
     end
 
-    it "prevents updating of a record to have finish date after start" do
-      p = country.presidents.create!(entered_office_at: day(4), left_office_at: day(5))
-      expect {
-        p.update!(entered_office_at: day(6))
-      }.to raise_error(*finish_after_start_error)
-    end
+    describe "#update" do
+      it "prevents updating of a record to have start date after finish" do
+        p = country.presidents.create!(entered_office_at: day(4), left_office_at: day(5))
+        expect {
+          p.update!(entered_office_at: day(6))
+        }.to raise_error(*finish_after_start_error)
+      end
 
-    it "doesn’t fail if no finish date set" do
-      expect {
-        country.presidents.create!(entered_office_at: day(10))
-      }.not_to raise_error
-    end
-
-    it "doesn’t fail if finish date is the same as start date" do
-      expect {
-        country.presidents.create!(entered_office_at: day(10), left_office_at: day(10))
-      }.not_to raise_error
+      it "prevents updating of a record to have finish date before start" do
+        p = country.presidents.create!(entered_office_at: day(4), left_office_at: day(5))
+        expect {
+          p.update!(entered_office_at: day(6))
+        }.to raise_error(*finish_after_start_error)
+      end
     end
   end
 
@@ -249,6 +272,7 @@ describe StateOfTheNation do
     let(:bounded_president) { country.presidents.create!(entered_office_at: day(1), left_office_at: day(4)) }
     let(:unbounded_president) { country.presidents.create!(entered_office_at: day(4), left_office_at: nil) }
     let(:president_with_empty_active_period) { country.presidents.create!(entered_office_at: day(4), left_office_at: day(4)) }
+    let(:president_with_nil_period) { country.presidents.create!(entered_office_at: nil, left_office_at: nil) }
 
     it "returns true for records that are active in the interval" do
       expect(bounded_president).to be_active_in_interval(day(3), day(7))
@@ -261,6 +285,13 @@ describe StateOfTheNation do
       expect(unbounded_president).to be_active_in_interval(nil, day(12))
       expect(unbounded_president).to be_active_in_interval(nil, nil)
       expect(unbounded_president).to be_active_in_interval(day(4), day(4))
+    end
+
+    it "returns true for records with no start or end activation period set" do
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: day(4))
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: nil)
+      expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: nil)
     end
 
     it "returns true for records with an empty activation period in the range" do
@@ -298,6 +329,13 @@ describe StateOfTheNation do
         expect(unbounded_president).to be_active_in_interval(nil, day(12))
         expect(unbounded_president).to be_active_in_interval(nil, nil)
         expect(unbounded_president).to be_active_in_interval(day(4), day(4))
+      end
+
+      it "returns true for records with no start or end activation period set" do
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: day(4))
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: day(4))
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: day(2), interval_end: nil)
+        expect(president_with_nil_period).to be_active_in_interval(interval_start: nil, interval_end: nil)
       end
 
       it "returns false for records with an empty activation period in the range" do
