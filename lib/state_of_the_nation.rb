@@ -27,12 +27,12 @@ module StateOfTheNation
         @finish_key = finish_key
 
         define_method "active?" do |time = Time.now.utc|
-          (finish.blank? || round_if_should(finish) > round_if_should(time)) && round_if_should(start) <= round_if_should(time)
+          (finish.blank? || finish > time) && start <= time
         end
 
         define_method "active_in_interval?" do |interval_start, interval_end|
-          record_start = round_if_should(start)
-          record_end = round_if_should(finish)
+          record_start = start
+          record_end = finish
           if ignore_empty && record_start == record_end
             false
           elsif interval_start.nil? && interval_end.nil?
@@ -51,26 +51,8 @@ module StateOfTheNation
         end
 
         scope :active, lambda { |time = Time.now.utc|
-          where(QueryString.query_for(:active_scope, self), round_if_should(time), round_if_should(time))
+          where(QueryString.query_for(:active_scope, self), time, time)
         }
-      end
-
-      private def round_if_should(time)
-        return time if !should_round_timestamps?
-        time.respond_to?(:round) ? time.round : time
-      end
-
-      private def should_round_timestamps?
-        # MySQL datetime fields do not support millisecond resolution while
-        # PostgreSQL's do. To prevent issues with near identical timestamps not
-        # comparing as expected in .active? methods we'll choose the resolution
-        # appropriate for the database adapter backing the model.
-        case self.connection.adapter_name
-        when /PostgreSQL/
-          false
-        else
-          true
-        end
       end
 
       self
@@ -163,12 +145,12 @@ module StateOfTheNation
 
   def start
     return unless start_key.present?
-    return round_if_should(self.send(start_key) || Time.now.utc)
+    return self.send(start_key) || Time.now.utc
   end
 
   def finish
     return unless finish_key.present?
-    round_if_should(self.send(finish_key))
+    self.send(finish_key)
   end
 
   def bad_configuration?
@@ -195,14 +177,5 @@ module StateOfTheNation
 
   def ignore_empty
     self.class.ignore_empty
-  end
-
-  def should_round_timestamps?
-    self.class.send(:should_round_timestamps?)
-  end
-
-  def round_if_should(time)
-    return time if time.nil?
-    self.class.send(:round_if_should, time)
   end
 end
