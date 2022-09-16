@@ -17,6 +17,7 @@ end
 RSpec::Matchers.define :be_considered_active do
   chain(:from) { |key| @start_key = key }
   chain(:until) { |key| @finish_key = key }
+  chain(:until_exclusive_end) { |key| @finish_key = key }
   match do |subject|
     subject.class.start_key == @start_key &&
     subject.class.finish_key == @finish_key
