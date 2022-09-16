@@ -5,7 +5,7 @@ jobs:
       RAILS_ENV: test
 
     docker:
-    - image: circleci/ruby:2.5.5
+    - image: circleci/ruby:2.7.5
 
     steps:
     - checkout
