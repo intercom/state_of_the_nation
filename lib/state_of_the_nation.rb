@@ -85,8 +85,10 @@ module StateOfTheNation
     private
 
     def add_child_methods(plural:, single:, with_identity_cache:)
-      child_class = self.reflect_on_association(plural).klass
-      name = self.name.demodulize.underscore.to_sym
+      reflection = self.reflect_on_association(plural)
+      name = reflection.inverse_of&.name || self.name.demodulize.underscore.to_sym
+
+      child_class = reflection.klass
       child_class.instance_variable_set(:@parent_association, name)
       child_class.instance_variable_set(:@prevent_multiple_active, single)
 

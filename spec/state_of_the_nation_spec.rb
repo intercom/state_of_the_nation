@@ -37,9 +37,30 @@ describe StateOfTheNation do
 
     has_many :presidents
     has_many :senators
+    has_many :states
 
     has_uniquely_active :president
     has_active :senators
+  end
+
+  class Governor < ActiveRecord::Base
+    include StateOfTheNation
+
+    belongs_to :jurisdiction, class_name: "State"
+
+    considered_active.from(:entered_office_at).until(:left_office_at)
+  end
+
+  class State < ActiveRecord::Base
+    include StateOfTheNation
+
+    self.table_name = "jurisdictions"
+
+    belongs_to :country
+
+    has_many :governors, foreign_key: "jurisdiction_id", inverse_of: :jurisdiction
+
+    has_uniquely_active :governor
   end
 
   before :all do
@@ -56,6 +77,17 @@ describe StateOfTheNation do
       t.datetime :left_office_at
       t.integer :country_id
     end
+
+    m.create_table :jurisdictions do |t|
+      t.integer :country_id
+    end
+
+    m.create_table :governors do |t|
+      t.datetime :entered_office_at
+      t.datetime :left_office_at
+      t.integer :jurisdiction_id
+    end
+
     m.create_table :countries
   end
 
@@ -475,6 +507,28 @@ describe StateOfTheNation do
         left_office_at: Date.new(1797, 5, 4)
       )
       expect(country.active_president(Date.new(1790, 1, 1))).to eq(washington)
+    end
+  end
+
+  context "With models and association names not matching the tables" do
+    let!(:state) { State.create! }
+
+    let!(:first_governor) { state.governors.create!(entered_office_at: day(1), left_office_at: day(8)) }
+    let!(:old_governor) { state.governors.create!(entered_office_at: day(10), left_office_at: day(15)) }
+    let!(:latest_governor) { state.governors.create!(entered_office_at: day(15), left_office_at: day(18)) }
+
+    it "works" do
+      expect(Governor.active(day(6))).to eq [first_governor]
+      expect(Governor.active(day(12))).to eq [old_governor]
+
+      expect(state.active_governor(day(6))).to eq first_governor
+      expect(state.active_governor(day(12))).to  eq old_governor
+
+      expect(first_governor).to be_active(day(6))
+      expect(old_governor).not_to be_active(day(6))
+
+      expect(old_governor).to be_active(day(12))
+      expect(latest_governor).not_to be_active(day(12))
     end
   end
 end
