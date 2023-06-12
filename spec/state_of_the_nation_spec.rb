@@ -21,7 +21,8 @@ describe StateOfTheNation do
 
     belongs_to :country
 
-    considered_active.from(:entered_office_at).until(:left_office_at)
+    # considered_active.from(:entered_office_at).until(:left_office_at)
+    considered_active.from(:entered_office_at).until_exclusive_end(:left_office_at)
   end
 
   class Senator < ActiveRecord::Base
@@ -29,7 +30,8 @@ describe StateOfTheNation do
 
     belongs_to :country
 
-    considered_active.from(:entered_office_at).until(:left_office_at)
+    # considered_active.from(:entered_office_at).until(:left_office_at)
+    considered_active.from(:entered_office_at).until_exclusive_end(:left_office_at)
   end
 
   class Country < ActiveRecord::Base
@@ -113,6 +115,7 @@ describe StateOfTheNation do
 
       it { is_expected.to include_state_of_the_nation }
       it { is_expected.to be_considered_active.from(:entered_office_at).until(:left_office_at) }
+      it { is_expected.to be_considered_active.from(:entered_office_at).until_exclusive_end(:left_office_at) }
     end
   end
 

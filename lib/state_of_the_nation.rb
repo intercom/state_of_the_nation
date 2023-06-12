@@ -55,6 +55,10 @@ module StateOfTheNation
         }
       end
 
+      def until_exclusive_end(finish_key)
+        self.until(finish_key)
+      end
+
       self
     end
 
