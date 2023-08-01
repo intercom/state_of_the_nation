@@ -8,7 +8,7 @@ StateOfTheNation helps model data whose _active_ state changes over time. It pro
 
 Take elected officials in the US Government: multiple Senators are in office (i.e. active) at any point in time, but there's only one President.
 
-```ruby
+```rubys
 class Country < ActiveRecord::Base
   include StateOfTheNation
   has_many :presidents
